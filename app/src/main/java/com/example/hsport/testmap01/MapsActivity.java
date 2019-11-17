@@ -1,7 +1,10 @@
 package com.example.hsport.testmap01;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
@@ -13,6 +16,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ListView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -47,10 +52,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     ListView lstPlaces;
     private PlacesClient placesClient;
     private FusedLocationProviderClient fusedLocationProviderClient;
-    private Location location;
+    private Location lastLocation;
     LocationManager locationManager;
     private static final String TAG = "MapsActivity";
+    private final LatLng mDefaultLocation = new LatLng(21.412906, 39.823865);
+    private static final int DEFAULT_ZOOM = 15;
+    private static final int PERMISSIONS_REUEST_FINE_LOCATION = 1;
+    private boolean mLocationPermission;
 
+    private static final int M_MAX_ENTRIES = 5;
+    private String[] mLikelyPlaceNames;
+    private String[] mLikelyPlaceAddresses;
+    private String[] mLikelyPlaceAttributtions;
+    private String[] mLikelyPlaceLatLngs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +75,69 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+    }
 
+    public void MapFromCodelabs(){
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        lstPlaces = findViewById(R.id.listPlaces);
+
+        String apiKey = getString(R.string.google_maps_key);
+        Places.initialize(getApplicationContext(), apiKey);
+        placesClient = Places.createClient(this);
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.action_geolocate:
+
+
+                return true;
+
+                default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+        public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        mLocationPermission = false;
+
+        switch(requestCode){
+            case PERMISSIONS_REUEST_FINE_LOCATION:{
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    mLocationPermission = true;
+                }
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    private void getLocationPermission(){
+        mLocationPermission = false;
+        if(ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            mLocationPermission = true;
+        }else {
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSIONS_REUEST_FINE_LOCATION);
+        }
+
+
+
+
+    }
+
+    public void MapFromYoutube(){
         // from https://www.youtube.com/watch?v=_y6imr1NQmA
         /*locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
@@ -69,6 +145,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
 
         }
+
+
+
 
         if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, new LocationListener() {
@@ -139,6 +218,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             });
 
         }*/
+
     }
 
 
@@ -155,6 +235,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         public void onMapReady (GoogleMap googleMap){
             mMap = googleMap;
 
+            mMap.getUiSettings().setZoomControlsEnabled(true);
+
+            // Prompt the user for permission.
+            getLocationPermission();
             // Add a marker in Sydney and move the camera
 //        LatLng sydney = new LatLng(-34, 151);
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
