@@ -198,7 +198,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
- 
+
 
         /**
          * Manipulates the map once available.
